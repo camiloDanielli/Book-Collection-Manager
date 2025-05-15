@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,12 +76,11 @@
   </style>
 </head>
 <body>
-  <header role="banner">
+  <header>
     <h1>📚 Mi Colección de Libros</h1>
-    <label for="search" class="visually-hidden">Buscar libros</label>
-    <input type="text" id="search" aria-label="Buscar libros por título, autor o género" placeholder="Buscar por título, autor o género...">
+    <input type="text" id="search" placeholder="Buscar por título, autor o género...">
   </header>
-  <main class="grid-container" id="bookGrid" role="main" aria-live="polite"></main>
+  <main class="grid-container" id="bookGrid"></main>
 
   <script>
     const bookGrid = document.getElementById("bookGrid");
@@ -120,14 +119,13 @@
       }
       bookGrid.innerHTML = books.map((book, index) => {
         const cover = book["Image Url"]?.trim() ? book["Image Url"] : '/data/default.png';
-        const altText = `Portada del libro "${book["Title"]}"`;
         return `
-          <div class="book-card" role="button" tabindex="0" onclick="openDetails(${index})" onkeypress="if(event.key==='Enter') openDetails(${index})" aria-label="Ver detalles del libro ${book["Title"]}">
-            <img src="${cover}" class="book-cover" alt="${altText}">
+          <div class="book-card" onclick="openDetails(${index})">
+            <img src="${cover}" class="book-cover" alt="${book["Title"]}">
             <div class="book-info">
               <div class="book-title">${book["Title"]}</div>
               <div class="book-author">${book["Author"]}</div>
-              <div class="stars" aria-label="Calificación: ${getStars(book["Rating"] || 0)}">${getStars(book["Rating"] || 0)}</div>
+              <div class="stars">${getStars(book["Rating"] || 0)}</div>
             </div>
           </div>
         `;
