@@ -42,6 +42,8 @@
       flex-direction: column;
       transition: transform 0.2s;
       cursor: pointer;
+      text-decoration: none;
+      color: inherit;
     }
     .book-card:hover {
       transform: scale(1.03);
@@ -88,10 +90,15 @@
     let allBooks = [];
 
     async function loadCSV() {
-      const res = await fetch('./data/datos.csv');
-      const text = await res.text();
-      allBooks = parseCSV(text);
-      renderBooks(allBooks);
+      try {
+        const res = await fetch('/data/datos.csv');
+        const text = await res.text();
+        allBooks = parseCSV(text);
+        renderBooks(allBooks);
+      } catch (err) {
+        bookGrid.innerHTML = '<div class="no-results">⚠️ Error al cargar los datos</div>';
+        console.error("Error al cargar CSV:", err);
+      }
     }
 
     function parseCSV(text) {
@@ -119,23 +126,18 @@
       }
       bookGrid.innerHTML = books.map((book, index) => {
         const cover = book["Image Url"]?.trim() ? book["Image Url"] : '/data/default.png';
+        const encoded = encodeURIComponent(JSON.stringify(book));
         return `
-          <div class="book-card" onclick="openDetails(${index})">
+          <a href="details.html?book=${encoded}" class="book-card">
             <img src="${cover}" class="book-cover" alt="${book["Title"]}">
             <div class="book-info">
               <div class="book-title">${book["Title"]}</div>
               <div class="book-author">${book["Author"]}</div>
               <div class="stars">${getStars(book["Rating"] || 0)}</div>
             </div>
-          </div>
+          </a>
         `;
       }).join('');
-    }
-
-    function openDetails(index) {
-      const book = allBooks[index];
-      const encoded = encodeURIComponent(JSON.stringify(book));
-      window.location.href = `details.html?book=${encoded}`;
     }
 
     searchInput.addEventListener("input", e => {
