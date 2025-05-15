@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,8 +42,6 @@
       flex-direction: column;
       transition: transform 0.2s;
       cursor: pointer;
-      text-decoration: none;
-      color: inherit;
     }
     .book-card:hover {
       transform: scale(1.03);
@@ -78,11 +76,12 @@
   </style>
 </head>
 <body>
-  <header>
+  <header role="banner">
     <h1>📚 Mi Colección de Libros</h1>
-    <input type="text" id="search" placeholder="Buscar por título, autor o género...">
+    <label for="search" class="visually-hidden">Buscar libros</label>
+    <input type="text" id="search" aria-label="Buscar libros por título, autor o género" placeholder="Buscar por título, autor o género...">
   </header>
-  <main class="grid-container" id="bookGrid"></main>
+  <main class="grid-container" id="bookGrid" role="main" aria-live="polite"></main>
 
   <script>
     const bookGrid = document.getElementById("bookGrid");
@@ -90,15 +89,10 @@
     let allBooks = [];
 
     async function loadCSV() {
-      try {
-        const res = await fetch('/data/datos.csv');
-        const text = await res.text();
-        allBooks = parseCSV(text);
-        renderBooks(allBooks);
-      } catch (err) {
-        bookGrid.innerHTML = '<div class="no-results">⚠️ Error al cargar los datos</div>';
-        console.error("Error al cargar CSV:", err);
-      }
+      const res = await fetch('./data/datos.csv');
+      const text = await res.text();
+      allBooks = parseCSV(text);
+      renderBooks(allBooks);
     }
 
     function parseCSV(text) {
@@ -125,19 +119,25 @@
         return;
       }
       bookGrid.innerHTML = books.map((book, index) => {
-        const cover = book["Image Url"]?.trim() ? book["Image Url"] : '/data/default.png' ;
-        const encoded = encodeURIComponent(JSON.stringify(book));
+        const cover = book["Image Url"]?.trim() ? book["Image Url"] : '/data/default.png';
+        const altText = `Portada del libro "${book["Title"]}"`;
         return `
-          <a href="details.html?book=${encoded}" class="book-card">
-            <img src="${cover}" class="book-cover" alt="${book["Title"]}">
+          <div class="book-card" role="button" tabindex="0" onclick="openDetails(${index})" onkeypress="if(event.key==='Enter') openDetails(${index})" aria-label="Ver detalles del libro ${book["Title"]}">
+            <img src="${cover}" class="book-cover" alt="${altText}">
             <div class="book-info">
               <div class="book-title">${book["Title"]}</div>
               <div class="book-author">${book["Author"]}</div>
-              <div class="stars">${getStars(book["Rating"] || 0)}</div>
+              <div class="stars" aria-label="Calificación: ${getStars(book["Rating"] || 0)}">${getStars(book["Rating"] || 0)}</div>
             </div>
-          </a>
+          </div>
         `;
       }).join('');
+    }
+
+    function openDetails(index) {
+      const book = allBooks[index];
+      const encoded = encodeURIComponent(JSON.stringify(book));
+      window.location.href = `details.html?book=${encoded}`;
     }
 
     searchInput.addEventListener("input", e => {
