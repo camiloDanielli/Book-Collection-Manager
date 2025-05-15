@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mi Colección de Libros</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #111;
+      color: #fff;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    input[type="file"], input[type="text"] {
+      padding: 0.5rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+    }
+    input[type="text"] {
+      background: #222;
+      color: #fff;
+    }
+    button.sort-button {
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      border-radius: 999px;
+      border: none;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+    }
+    button.sort-button:hover {
+      background: #444;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .book-card {
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .book-card:hover {
+      transform: scale(1.03);
+    }
+    .book-cover {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+    }
+    .book-info {
+      padding: 0.5rem;
+    }
+    .book-title {
+      font-weight: bold;
+      font-size: 1rem;
+      margin: 0.25rem 0;
+    }
+    .book-author {
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+    .stars {
+      color: gold;
+      font-size: 1rem;
+    }
+    .no-results {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #888;
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📚 Mi Colección de Libros</h1>
+    <input type="text" id="search" placeholder="Buscar por título, autor o género...">
+    <button class="sort-button" id="sortTitle">Ordenar por título</button>
+  </header>
+  <main class="grid-container" id="bookGrid"></main>
+
+  <script>
+    const bookGrid = document.getElementById("bookGrid");
+    const searchInput = document.getElementById("search");
+    const sortTitleButton = document.getElementById("sortTitle");
+    let allBooks = [];
+    let currentBooks = [];
+
+    async function loadCSV() {
+      const res = await fetch('./data/datos.csv');
+      const text = await res.text();
+      allBooks = parseCSV(text);
+      currentBooks = [...allBooks];
+      renderBooks(currentBooks);
+    }
+
+    function parseCSV(text) {
+      const rows = text.split("\n").filter(r => r.trim());
+      const headers = rows[0].split(",").map(h => h.replaceAll('"', '').trim());
+      const books = rows.slice(1).map(row => {
+        const values = row.match(/("[^"]*"|[^,]+)/g) || [];
+        return headers.reduce((acc, header, i) => {
+          acc[header] = values[i]?.replaceAll('"', '') || "";
+          return acc;
+        }, {});
+      });
+      return books;
+    }
+
+    function getStars(rating) {
+      const stars = Math.round(Number(rating) || 0);
+      return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+    }
+
+    function renderBooks(books) {
+      if (books.length === 0) {
+        bookGrid.innerHTML = '<div class="no-results">🔍 No se encontraron resultados</div>';
+        return;
+      }
+      bookGrid.innerHTML = books.map((book, index) => `
+        <div class="book-card" onclick="openDetails(${index})">
+          <img src="${book["Image Url"] || 'https://via.placeholder.com/200x300?text=No+Cover'}" class="book-cover" alt="${book["Title"]}">
+          <div class="book-info">
+            <div class="book-title">${book["Title"]}</div>
+            <div class="book-author">${book["Author"]}</div>
+            <div class="stars">${getStars(book["Rating"] || 0)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openDetails(index) {
+      const book = currentBooks[index];
+      const encoded = encodeURIComponent(JSON.stringify(book));
+      window.location.href = `details.html?book=${encoded}`;
+    }
+
+    searchInput.addEventListener("input", e => {
+      const searchTerm = e.target.value.toLowerCase();
+      currentBooks = allBooks.filter(book => {
+        return [book["Title"], book["Author"], book["Genres"]]
+          .some(val => val?.toLowerCase().includes(searchTerm));
+      });
+      renderBooks(currentBooks);
+    });
+
+    sortTitleButton.addEventListener("click", () => {
+      currentBooks.sort((a, b) => a["Title"].localeCompare(b["Title"]));
+      renderBooks(currentBooks);
+    });
+
+    loadCSV();
+  </script>
+</body>
+</html>
