@@ -118,7 +118,7 @@
         return;
       }
       bookGrid.innerHTML = books.map((book, index) => {
-        const cover = book["Image Url"]?.trim() ? book["Image Url"] : '/data/default.png';
+        const cover = book["Image Url"]?.trim() ? book["Image Url"] : './data/default.png';
         return `
           <div class="book-card" onclick="openDetails(${index})">
             <img src="${cover}" class="book-cover" alt="${book["Title"]}">
