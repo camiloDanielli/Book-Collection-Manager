@@ -1,0 +1,113 @@
+/* Simple Book Collection Manager */
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Book Collection</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f9f9f9;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .search-box {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📚 Mi Colección de Libros</h1>
+    <input type="file" id="csvFile" accept=".csv">
+    <input type="text" id="search" class="search-box" placeholder="Buscar por título, autor o género...">
+  </header>
+  <main>
+    <table id="bookTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </main>
+
+  <script>
+    const csvFileInput = document.getElementById("csvFile");
+    const tableHead = document.getElementById("tableHead");
+    const tableBody = document.getElementById("tableBody");
+    const searchInput = document.getElementById("search");
+    let allBooks = [];
+
+    function parseCSV(text) {
+      const rows = text.split("\n").filter(r => r.trim());
+      const headers = rows[0].split(",").map(h => h.replaceAll('"', '').trim());
+      const books = rows.slice(1).map(row => {
+        const values = row.match(/("[^"]*"|[^,]+)/g) || [];
+        return headers.reduce((acc, header, i) => {
+          acc[header] = values[i]?.replaceAll('"', '') || "";
+          return acc;
+        }, {});
+      });
+      return { headers, books };
+    }
+
+    function renderTable(headers, books) {
+      tableHead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+      tableBody.innerHTML = books.map(book =>
+        '<tr>' + headers.map(h => `<td>${book[h]}</td>`).join('') + '</tr>'
+      ).join('');
+    }
+
+    csvFileInput.addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const { headers, books } = parseCSV(reader.result);
+        allBooks = books;
+        renderTable(headers, books);
+        searchInput.dataset.headers = JSON.stringify(headers);
+      };
+      reader.readAsText(file);
+    });
+
+    searchInput.addEventListener("input", e => {
+      const searchTerm = e.target.value.toLowerCase();
+      const headers = JSON.parse(e.target.dataset.headers || "[]");
+      const filtered = allBooks.filter(book => {
+        return [book["Title"], book["Author"], book["Genres"]]
+          .some(val => val?.toLowerCase().includes(searchTerm));
+      });
+      renderTable(headers, filtered);
+    });
+  </script>
+</body>
+</html>
