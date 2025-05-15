@@ -125,7 +125,7 @@
         return;
       }
       bookGrid.innerHTML = books.map((book, index) => {
-        const cover = book["Image Url"]?.trim() ? book["Image Url"] : './data/default.png';
+        const cover = book["Image Url"]?.trim() ? './data/default.png' : book["Image Url"] ;
         const encoded = encodeURIComponent(JSON.stringify(book));
         return `
           <a href="details.html?book=${encoded}" class="book-card">
